@@ -1,0 +1,25 @@
+FROM registry.redhat.io/rhel9/rhel-bootc:latest 
+
+LABEL maintainer="Security Architecture Lab" \ 
+  description="Experimental PQC Evaluation Image with OQS (Open Quantum Safe) Provider" 
+
+# Install development toolchain and dependencies 
+RUN dnf install -y \ 
+    gcc \ 
+    cmake \ 
+    git \ 
+    openssl-devel \ 
+    crypto-policies \ 
+    && dnf clean all 
+
+# Build and stage experimental liboqs / oqs-provider for OpenSSL 3.x testing 
+WORKDIR /tmp 
+RUN git clone --depth 1 https://github.com/open-quantum-safe/liboqs.git && \ 
+    cmake -S liboqs -B liboqs/build -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=/usr/local && \ 
+    cmake --build liboqs/build --target install 
+
+# Enable experimental OpenSSL PQC provider configuration 
+COPY config/crypto-policies/PQC-AGILITY.policy /etc/crypto-policies/policies/modules/PQC-AGILITY.policy 
+
+RUN update-crypto-policies --set DEFAULT:PQC-AGILITY 
+WORKDIR /root
