@@ -1,0 +1,9 @@
+# Custom Crypto Policy Sub-module for Cryptographic Agility 
+# Disables deprecated hashes/ciphers and enforces modern TLS 
+1.3 / SSH primitives 
+cipher = AES-256-GCM AES-128-GCM CHACHA20-POLY1305 
+group = SECP256R1 SECP384R1 SECP521R1 X25519 
+hash = SHA2-256 SHA2-384 SHA2-512 SHA3-256 SHA3-384 SHA3-512 
+sign = ECDSA-SHA2-256 ECDSA-SHA2-384 ECDSA-SHA2-512 RSA-PSS 
+min_rsa_size = 3072 
+tls_version_min = TLS1.3
