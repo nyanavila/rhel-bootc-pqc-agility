@@ -1,0 +1,36 @@
+'''
+stages: 
+  - build 
+  - test 
+  - publish 
+  
+variables: 
+  REGISTRY_URL: "satellite.example.com" 
+  IMAGE_NAME: "bootc-images/rhel9-crypto-agile" 
+  IMAGE_TAG: "$CI_COMMIT_SHORT_SHA" 
+  
+build_bootc_image: 
+  stage: build 
+  script: 
+    - podman build -t ${REGISTRY_URL}/${IMAGE_NAME}:${IMAGE_TAG} -f Containerfile . 
+    - podman save -o image.tar ${REGISTRY_URL}/${IMAGE_NAME}:${IMAGE_TAG} 
+  artifacts: 
+    paths: 
+      - image.tar 
+    expire_in: 1 day 
+    
+  test_crypto_policy: 
+    stage: test 
+    script: 
+      - podman load -i image.tar 
+      - podman run --rm ${REGISTRY_URL}/${IMAGE_NAME}:${IMAGE_TAG} /bin/bash -c "update-crypto-policies --show" 
+      
+  publish_to_satellite: 
+    stage: publish 
+    script: 
+      - podman load -i image.tar 
+      - podman login -u $SATELLITE_USER -p $SATELLITE_PASSWORD https://${REGISTRY_URL} 
+      - podman push ${REGISTRY_URL}/${IMAGE_NAME}:${IMAGE_TAG} 
+      - podman push ${REGISTRY_URL}/${IMAGE_NAME}:latest 
+    only: 
+      - main
